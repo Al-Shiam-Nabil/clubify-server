@@ -31,6 +31,7 @@ async function run() {
     const database = client.db("clubify");
     const usersCollection = database.collection("users");
 
+    // create user with default role
     app.post("/users", async (req, res) => {
       try {
         const info = req.body;
@@ -49,6 +50,23 @@ async function run() {
 
         console.log(info);
         const result = await usersCollection.insertOne(info);
+        res.json(result);
+      } catch (error) {
+        console.log(error);
+        res.status(500).json({
+          message: "Internal server error.",
+        });
+      }
+    });
+
+    //  user by email
+    app.get("/users", async (req, res) => {
+      try {
+        const { email } = req.query;
+        console.log(email);
+        const query = { email };
+
+        const result = await usersCollection.findOne(query);
         res.json(result);
       } catch (error) {
         console.log(error);
