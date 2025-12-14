@@ -30,6 +30,7 @@ async function run() {
     await client.connect();
     const database = client.db("clubify");
     const usersCollection = database.collection("users");
+    const clubsCollection = database.collection("clubs");
 
     // create user with default role
     app.post("/users", async (req, res) => {
@@ -59,11 +60,11 @@ async function run() {
       }
     });
 
-    //  user by email
-    app.get("/users", async (req, res) => {
+    //  user role
+    app.get("/users/:email/role", async (req, res) => {
       try {
-        const { email } = req.query;
-        console.log(email);
+        const { email } = req.params;
+
         const query = { email };
 
         const result = await usersCollection.findOne(query);
@@ -74,6 +75,26 @@ async function run() {
           message: "Internal server error.",
         });
       }
+    });
+
+    // ------------------club related api--------------------
+
+    // create club api
+    app.post("/clubs", async (req, res) => {
+    try {
+        const clubInfo = req.body;
+      clubInfo.status = "pending";
+      clubInfo.createdAt = new Date();
+
+      console.log(clubInfo);
+      const result = await clubsCollection.insertOne(clubInfo);
+      res.json(result);
+    } catch (error) {
+       console.log(error);
+        res.status(500).json({
+          message: "Internal server error.",
+        });
+    }
     });
 
     await client.db("admin").command({ ping: 1 });
