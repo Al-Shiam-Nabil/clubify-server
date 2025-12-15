@@ -1,7 +1,7 @@
 const express = require("express");
 const cors = require("cors");
 const app = express();
-const { MongoClient, ServerApiVersion } = require("mongodb");
+const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 
 app.use(cors());
 app.use(express.json());
@@ -46,7 +46,7 @@ async function run() {
           });
         }
 
-        info.role = "user";
+        info.role = "member";
         info.createdAt = new Date();
 
         console.log(info);
@@ -97,10 +97,37 @@ async function run() {
       }
     });
 
+    // edit club api
+    app.patch("/clubs/:id", async (req, res) => {
+      try {
+        const { id } = req.params;
+        const query = { _id: new ObjectId(id) };
+        const updatedData = req.body;
+        console.log({ ...updatedData });
+        const update = { $set: { ...updatedData } };
+        const result = await clubsCollection.updateOne(query, update);
+        res.json(result);
+        console.log(result);
+      } catch (error) {
+        console.log(error);
+        res.status(500).json({
+          message: "Internal server error.",
+        });
+      }
+    });
+
     // get all clubs
     app.get("/clubs", async (req, res) => {
       try {
-        const cursor = clubsCollection.find({});
+        const { email } = req.query;
+        console.log(email);
+        const query = {};
+        if (email) {
+          query.managerEmail = email;
+        }
+        console.log(query);
+
+        const cursor = clubsCollection.find(query);
         const result = await cursor.toArray();
         res.json(result);
       } catch (error) {
