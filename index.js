@@ -81,20 +81,34 @@ async function run() {
 
     // create club api
     app.post("/clubs", async (req, res) => {
-    try {
+      try {
         const clubInfo = req.body;
-      clubInfo.status = "pending";
-      clubInfo.createdAt = new Date();
+        clubInfo.status = "pending";
+        clubInfo.createdAt = new Date();
 
-      console.log(clubInfo);
-      const result = await clubsCollection.insertOne(clubInfo);
-      res.json(result);
-    } catch (error) {
-       console.log(error);
+        console.log(clubInfo);
+        const result = await clubsCollection.insertOne(clubInfo);
+        res.json(result);
+      } catch (error) {
+        console.log(error);
         res.status(500).json({
           message: "Internal server error.",
         });
-    }
+      }
+    });
+
+    // get all clubs
+    app.get("/clubs", async (req, res) => {
+      try {
+        const cursor = clubsCollection.find({});
+        const result = await cursor.toArray();
+        res.json(result);
+      } catch (error) {
+        console.log(error);
+        res.status(500).json({
+          message: "Internal server error.",
+        });
+      }
     });
 
     await client.db("admin").command({ ping: 1 });
