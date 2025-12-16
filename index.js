@@ -31,6 +31,7 @@ async function run() {
     const database = client.db("clubify");
     const usersCollection = database.collection("users");
     const clubsCollection = database.collection("clubs");
+    const eventsCollection = database.collection("events");
 
     // create user with default role
     app.post("/users", async (req, res) => {
@@ -144,6 +145,34 @@ async function run() {
         const { id } = req.params;
         const query = { _id: new ObjectId(id) };
         const result = await clubsCollection.deleteOne(query);
+        res.json(result);
+      } catch (error) {
+        console.log(error);
+        res.status(500).json({
+          message: "Internal server error.",
+        });
+      }
+    });
+
+    // ---------event-----------
+    app.post("/events/:id", async (req, res) => {
+      try {
+        const { id } = req.params;
+        console.log(id);
+        const findId = { _id: new ObjectId(id) };
+        const eventInfo = req.body;
+
+        const findClub = await clubsCollection.findOne(findId);
+
+        if (eventInfo && findClub) {
+          eventInfo.clubName = findClub?.clubName;
+          eventInfo.category = findClub?.category;
+          eventInfo.createdAt = new Date();
+          eventInfo.isPaid = false;
+          eventInfo.managerEmail=findClub?.managerEmail
+        }
+
+        const result = await eventsCollection.insertOne(eventInfo);
         res.json(result);
       } catch (error) {
         console.log(error);
