@@ -182,6 +182,24 @@ async function run() {
       }
     });
 
+    // events by manager
+    app.get('/events',async(req,res)=>{
+      try {
+        const {email}=req.query
+        console.log(email)
+        const query={managerEmail:email}
+        console.log(query)
+        const cursor=eventsCollection.find(query)
+        const result=await cursor.toArray()
+        res.json(result)
+      } catch (error) {
+         console.log(error);
+        res.status(500).json({
+          message: "Internal server error.",
+        });
+      }
+    })
+
     await client.db("admin").command({ ping: 1 });
     console.log(
       "Pinged your deployment. You successfully connected to MongoDB!"
