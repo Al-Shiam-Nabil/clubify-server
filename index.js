@@ -213,18 +213,33 @@ async function run() {
           _id: new ObjectId(updatedInfo?.clubId),
         });
         console.log(findClub);
-        if(findClub){
-          updatedInfo.clubName=findClub?.clubName
-          updatedInfo.category=findClub?.category
+        if (findClub) {
+          updatedInfo.clubName = findClub?.clubName;
+          updatedInfo.category = findClub?.category;
         }
 
-        const info={
-          $set:{...updatedInfo}
-        }
+        const info = {
+          $set: { ...updatedInfo },
+        };
 
-        const result=await eventsCollection.updateOne(query,info)
-        res.json(result)
+        const result = await eventsCollection.updateOne(query, info);
+        res.json(result);
+      } catch (error) {
+        console.log(error);
+        res.status(500).json({
+          message: "Internal server error.",
+        });
+      }
+    });
 
+    // delete event
+    app.delete("/events/:id", async (req, res) => {
+      try {
+        const { id } = req.params;
+
+        const query = { _id: new ObjectId(id) };
+        const result = await eventsCollection.deleteOne(query);
+        res.send(result);
       } catch (error) {
         console.log(error);
         res.status(500).json({
