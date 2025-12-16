@@ -107,6 +107,12 @@ async function run() {
         console.log({ ...updatedData });
         const update = { $set: { ...updatedData } };
         const result = await clubsCollection.updateOne(query, update);
+        // updtae events collection also
+        const eventQuery={clubId:id}
+        const eventUpdate={
+          $set:{clubName:updatedData?.clubName,category:updatedData?.category}
+        }
+        await eventsCollection.updateMany(eventQuery,eventUpdate)
         res.json(result);
         console.log(result);
       } catch (error) {
@@ -144,8 +150,11 @@ async function run() {
       try {
         const { id } = req.params;
         const query = { _id: new ObjectId(id) };
-        const result = await clubsCollection.deleteOne(query);
-        res.json(result);
+        const clubDeleteResult = await clubsCollection.deleteOne(query);
+
+       await eventsCollection.deleteMany({clubId:id})
+
+        res.json(clubDeleteResult);
       } catch (error) {
         console.log(error);
         res.status(500).json({
