@@ -169,7 +169,7 @@ async function run() {
           eventInfo.category = findClub?.category;
           eventInfo.createdAt = new Date();
           eventInfo.isPaid = false;
-          eventInfo.managerEmail=findClub?.managerEmail
+          eventInfo.managerEmail = findClub?.managerEmail;
         }
 
         const result = await eventsCollection.insertOne(eventInfo);
@@ -183,22 +183,55 @@ async function run() {
     });
 
     // events by manager
-    app.get('/events',async(req,res)=>{
+    app.get("/events", async (req, res) => {
       try {
-        const {email}=req.query
-        console.log(email)
-        const query={managerEmail:email}
-        console.log(query)
-        const cursor=eventsCollection.find(query)
-        const result=await cursor.toArray()
-        res.json(result)
+        const { email } = req.query;
+        console.log(email);
+        const query = { managerEmail: email };
+        console.log(query);
+        const cursor = eventsCollection.find(query);
+        const result = await cursor.toArray();
+        res.json(result);
       } catch (error) {
-         console.log(error);
+        console.log(error);
         res.status(500).json({
           message: "Internal server error.",
         });
       }
-    })
+    });
+
+    // update event
+
+    app.patch("/events/:id", async (req, res) => {
+      try {
+        const { id } = req.params;
+        const query = { _id: new ObjectId(id) };
+
+        const updatedInfo = req.body;
+        console.log(updatedInfo?.clubId);
+        const findClub = await clubsCollection.findOne({
+          _id: new ObjectId(updatedInfo?.clubId),
+        });
+        console.log(findClub);
+        if(findClub){
+          updatedInfo.clubName=findClub?.clubName
+          updatedInfo.category=findClub?.category
+        }
+
+        const info={
+          $set:{...updatedInfo}
+        }
+
+        const result=await eventsCollection.updateOne(query,info)
+        res.json(result)
+
+      } catch (error) {
+        console.log(error);
+        res.status(500).json({
+          message: "Internal server error.",
+        });
+      }
+    });
 
     await client.db("admin").command({ ping: 1 });
     console.log(
