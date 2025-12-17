@@ -62,13 +62,47 @@ async function run() {
     });
 
     //  user role
-    app.get("/users/:email/role", async (req, res) => {
+    app.get("/users/role/:email", async (req, res) => {
       try {
         const { email } = req.params;
 
         const query = { email };
 
         const result = await usersCollection.findOne(query);
+        res.json(result);
+      } catch (error) {
+        console.log(error);
+        res.status(500).json({
+          message: "Internal server error.",
+        });
+      }
+    });
+
+    // user patch
+    app.patch("/users/:id", async (req, res) => {
+      try {
+        const { id } = req.params;
+        const query = { _id: new ObjectId(id) };
+        const roleInfo = req.body;
+        console.log(roleInfo.role);
+        const updatedInfo = {
+          $set: { role: roleInfo?.role },
+        };
+        const result = await usersCollection.updateOne(query, updatedInfo);
+        res.json(result);
+      } catch (error) {
+        console.log(error);
+        res.status(500).json({
+          message: "Internal server error.",
+        });
+      }
+    });
+
+    // get all users
+    app.get("/users", async (req, res) => {
+      try {
+        const cursor = usersCollection.find({});
+        const result = await cursor.toArray();
         res.json(result);
       } catch (error) {
         console.log(error);
@@ -86,6 +120,8 @@ async function run() {
         const clubInfo = req.body;
         clubInfo.status = "pending";
         clubInfo.createdAt = new Date();
+        clubInfo.membersCount = 0;
+        clubInfo.eventsCount = 0;
 
         console.log(clubInfo);
         const result = await clubsCollection.insertOne(clubInfo);
@@ -108,12 +144,11 @@ async function run() {
         console.log(query);
         const statusInfo = req.body;
         const updatedInfo = {
-          $set: { status: statusInfo.status,verifiedAt:new Date() },
+          $set: { status: statusInfo.status, verifiedAt: new Date() },
         };
         const result = await clubsCollection.updateOne(query, updatedInfo);
         const managerQuery = { email: statusInfo?.managerEmail };
         const findAdmin = await usersCollection.findOne(managerQuery);
-        console.log("hhhh", findAdmin);
         if (statusInfo.status === "approved" && findAdmin.role !== "admin") {
           const roleUpdate = {
             $set: { role: "manager" },
