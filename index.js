@@ -98,6 +98,37 @@ async function run() {
       }
     });
 
+    // approve or reject club
+
+    app.patch("/clubs/:id/status", async (req, res) => {
+      try {
+        const { id } = req.params;
+
+        const query = { _id: new ObjectId(id) };
+        console.log(query);
+        const statusInfo = req.body;
+        const updatedInfo = {
+          $set: { status: statusInfo.status,verifiedAt:new Date() },
+        };
+        const result = await clubsCollection.updateOne(query, updatedInfo);
+        const managerQuery = { email: statusInfo?.managerEmail };
+        const findAdmin = await usersCollection.findOne(managerQuery);
+        console.log("hhhh", findAdmin);
+        if (statusInfo.status === "approved" && findAdmin.role !== "admin") {
+          const roleUpdate = {
+            $set: { role: "manager" },
+          };
+          await usersCollection.updateOne(managerQuery, roleUpdate);
+        }
+        res.json(result);
+      } catch (error) {
+        console.log(error);
+        res.status(500).json({
+          message: "Internal server error.",
+        });
+      }
+    });
+
     // edit club api
     app.patch("/clubs/:id", async (req, res) => {
       try {
@@ -108,11 +139,14 @@ async function run() {
         const update = { $set: { ...updatedData } };
         const result = await clubsCollection.updateOne(query, update);
         // updtae events collection also
-        const eventQuery={clubId:id}
-        const eventUpdate={
-          $set:{clubName:updatedData?.clubName,category:updatedData?.category}
-        }
-        await eventsCollection.updateMany(eventQuery,eventUpdate)
+        const eventQuery = { clubId: id };
+        const eventUpdate = {
+          $set: {
+            clubName: updatedData?.clubName,
+            category: updatedData?.category,
+          },
+        };
+        await eventsCollection.updateMany(eventQuery, eventUpdate);
         res.json(result);
         console.log(result);
       } catch (error) {
@@ -123,7 +157,7 @@ async function run() {
       }
     });
 
-    // get all clubs
+    // get clubs
     app.get("/clubs", async (req, res) => {
       try {
         const { email } = req.query;
@@ -152,7 +186,7 @@ async function run() {
         const query = { _id: new ObjectId(id) };
         const clubDeleteResult = await clubsCollection.deleteOne(query);
 
-       await eventsCollection.deleteMany({clubId:id})
+        await eventsCollection.deleteMany({ clubId: id });
 
         res.json(clubDeleteResult);
       } catch (error) {
