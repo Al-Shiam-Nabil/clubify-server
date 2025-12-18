@@ -192,7 +192,7 @@ async function run() {
       }
     });
 
-    // get clubs
+    // get clubs by specefic email
     app.get("/clubs", async (req, res) => {
       try {
         const { email } = req.query;
@@ -203,7 +203,25 @@ async function run() {
         }
         console.log(query);
 
-        const cursor = clubsCollection.find(query);
+        const cursor = clubsCollection.find(query).sort({ createdAt: -1 });
+        const result = await cursor.toArray();
+        res.json(result);
+      } catch (error) {
+        console.log(error);
+        res.status(500).json({
+          message: "Internal server error.",
+        });
+      }
+    });
+
+    // get all clubs
+    app.get("/all-clubs", async (req, res) => {
+      try {
+        const { sort = "createdAt", order = "desc" } = req.query;
+        const sortOption = {};
+        sortOption[sort || "createdAt"] = order === "asc" ? 1 : -1;
+
+        const cursor = clubsCollection.find({}).sort(sortOption);
         const result = await cursor.toArray();
         res.json(result);
       } catch (error) {
@@ -224,6 +242,24 @@ async function run() {
         await eventsCollection.deleteMany({ clubId: id });
 
         res.json(clubDeleteResult);
+      } catch (error) {
+        console.log(error);
+        res.status(500).json({
+          message: "Internal server error.",
+        });
+      }
+    });
+
+    // latest 8 clubs for all
+    app.get("/latest-clubs", async (req, res) => {
+      try {
+        const sortFields = { createdAt: -1 };
+        const query = { status: "approved" };
+        const cursor = clubsCollection.find(query).sort(sortFields).limit(8);
+
+        const result = await cursor.toArray();
+
+        res.json(result);
       } catch (error) {
         console.log(error);
         res.status(500).json({
