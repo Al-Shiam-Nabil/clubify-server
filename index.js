@@ -217,11 +217,17 @@ async function run() {
     // get all clubs
     app.get("/all-clubs", async (req, res) => {
       try {
-        const { sort = "createdAt", order = "desc" } = req.query;
+        const { sort = "createdAt", order = "desc", filter } = req.query;
         const sortOption = {};
         sortOption[sort || "createdAt"] = order === "asc" ? 1 : -1;
+        const query ={}
+        if (filter) {
+         
+          query.category=filter
+        }
 
-        const cursor = clubsCollection.find({}).sort(sortOption);
+        console.log(query)
+        const cursor = clubsCollection.find(query).sort(sortOption);
         const result = await cursor.toArray();
         res.json(result);
       } catch (error) {
@@ -231,6 +237,22 @@ async function run() {
         });
       }
     });
+
+    // get all categories
+app.get('/all-categories',async(req,res)=>{
+  try {
+const projectField={category:1,_id:0}
+    const cursor=clubsCollection.find().project(projectField)
+    const result=await cursor.toArray()
+    res.json(result)
+  } catch (error) {
+     console.log(error);
+        res.status(500).json({
+          message: "Internal server error.",
+        });
+  }
+})
+
 
     // delete club
     app.delete("/clubs/:id", async (req, res) => {
