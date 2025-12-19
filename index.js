@@ -136,7 +136,7 @@ async function run() {
 
     // approve or reject club
 
-    app.patch("/clubs/:id/status", async (req, res) => {
+    app.patch("/clubs/status/:id", async (req, res) => {
       try {
         const { id } = req.params;
 
@@ -287,6 +287,21 @@ async function run() {
 
         const result = await cursor.toArray();
 
+        res.json(result);
+      } catch (error) {
+        console.log(error);
+        res.status(500).json({
+          message: "Internal server error.",
+        });
+      }
+    });
+
+    // club details api
+    app.get("clubs/:id", async (req, res) => {
+      try {
+        const { id } = req.params;
+        const query = { _id: new ObjectId(id) };
+        const result = await clubsCollection.findOne(query);
         res.json(result);
       } catch (error) {
         console.log(error);
