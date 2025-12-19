@@ -407,6 +407,53 @@ async function run() {
       }
     });
 
+    // all events
+    app.get("/all-events", async (req, res) => {
+      try {
+        const { sort = "eventDate", order = "asc", filter, search } = req.query;
+
+        const sortOption = {};
+        sortOption[sort] = order === "asc" ? 1 : -1;
+
+        console.log(sortOption);
+        const query = {};
+
+        if (filter) {
+          query.category = filter;
+        }
+
+        if (search) {
+          query.title = { $regex: search, $options: "i" };
+        }
+
+        console.log(search);
+
+        const cursor = eventsCollection.find(query).sort(sortOption);
+        const result = await cursor.toArray();
+        res.json(result);
+      } catch (error) {
+        console.log(error);
+        res.status(500).json({
+          message: "Internal server error.",
+        });
+      }
+    });
+
+    // get all events categories
+    app.get("/event-categories", async (req, res) => {
+      try {
+        const projectField = { category: 1, _id: 0 };
+        const cursor = eventsCollection.find().project(projectField);
+        const result = await cursor.toArray();
+        res.json(result);
+      } catch (error) {
+        console.log(error);
+        res.status(500).json({
+          message: "Internal server error.",
+        });
+      }
+    });
+
     await client.db("admin").command({ ping: 1 });
     console.log(
       "Pinged your deployment. You successfully connected to MongoDB!"
