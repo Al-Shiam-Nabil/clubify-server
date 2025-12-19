@@ -217,16 +217,23 @@ async function run() {
     // get all clubs
     app.get("/all-clubs", async (req, res) => {
       try {
-        const { sort = "createdAt", order = "desc", filter } = req.query;
+        const {
+          sort = "createdAt",
+          order = "desc",
+          filter,
+          search,
+        } = req.query;
         const sortOption = {};
         sortOption[sort || "createdAt"] = order === "asc" ? 1 : -1;
-        const query ={}
+        const query = {};
         if (filter) {
-         
-          query.category=filter
+          query.category = filter;
         }
+        if (search) {
+          query.clubName = { $regex: search, $options: "i" };
+        }
+        console.log(query);
 
-        console.log(query)
         const cursor = clubsCollection.find(query).sort(sortOption);
         const result = await cursor.toArray();
         res.json(result);
@@ -239,20 +246,19 @@ async function run() {
     });
 
     // get all categories
-app.get('/all-categories',async(req,res)=>{
-  try {
-const projectField={category:1,_id:0}
-    const cursor=clubsCollection.find().project(projectField)
-    const result=await cursor.toArray()
-    res.json(result)
-  } catch (error) {
-     console.log(error);
+    app.get("/all-categories", async (req, res) => {
+      try {
+        const projectField = { category: 1, _id: 0 };
+        const cursor = clubsCollection.find().project(projectField);
+        const result = await cursor.toArray();
+        res.json(result);
+      } catch (error) {
+        console.log(error);
         res.status(500).json({
           message: "Internal server error.",
         });
-  }
-})
-
+      }
+    });
 
     // delete club
     app.delete("/clubs/:id", async (req, res) => {
@@ -325,7 +331,7 @@ const projectField={category:1,_id:0}
         console.log(email);
         const query = { managerEmail: email };
         console.log(query);
-        const cursor = eventsCollection.find(query);
+        const cursor = eventsCollection.find(query).sort({ createdAt: -1 });
         const result = await cursor.toArray();
         res.json(result);
       } catch (error) {
@@ -376,6 +382,23 @@ const projectField={category:1,_id:0}
         const query = { _id: new ObjectId(id) };
         const result = await eventsCollection.deleteOne(query);
         res.send(result);
+      } catch (error) {
+        console.log(error);
+        res.status(500).json({
+          message: "Internal server error.",
+        });
+      }
+    });
+
+    // get upcoming events
+    app.get("/upcoming-events", async (req, res) => {
+      try {
+        const cursor = eventsCollection
+          .find({})
+          .sort({ eventDate: 1 })
+          .limit(3);
+        const result = await cursor.toArray();
+        res.json(result);
       } catch (error) {
         console.log(error);
         res.status(500).json({
