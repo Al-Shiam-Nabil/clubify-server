@@ -297,11 +297,20 @@ async function run() {
     });
 
     // club details api
-    app.get("clubs/:id", async (req, res) => {
+    app.get("/clubs/:id", async (req, res) => {
       try {
         const { id } = req.params;
+        console.log(id);
         const query = { _id: new ObjectId(id) };
         const result = await clubsCollection.findOne(query);
+
+        const managerEmail = result?.managerEmail;
+        const managerResult = await usersCollection.findOne({
+          email: managerEmail,
+        });
+
+        result.managerImage = managerResult?.photoURL;
+
         res.json(result);
       } catch (error) {
         console.log(error);
